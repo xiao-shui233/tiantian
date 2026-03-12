@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐧 海底小纵队 · 生活场景测试</title>
+    <!-- Chart.js 轻量图表 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: #0a1a2f;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 20px 10px;
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(0, 191, 255, 0.15) 0%, transparent 25%),
+                radial-gradient(circle at 80% 70%, rgba(255, 215, 0, 0.1) 0%, transparent 30%),
+                linear-gradient(145deg, #05223a 0%, #022b44 40%, #1a4b6d 100%);
+            background-blend-mode: overlay, screen, normal;
+            position: relative;
+            background-attachment: fixed;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.2"><path d="M10,50 Q30,35 50,50 T90,50" stroke="white" fill="none" stroke-width="0.6"/><path d="M5,70 Q25,55 45,70 T85,70" stroke="%23a0dbff" fill="none" stroke-width="0.4"/><circle cx="70" cy="20" r="3" fill="%23ffffff20"/><circle cx="15" cy="85" r="5" fill="%23b0e0ff10"/></svg>') repeat;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .main-wrapper {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(10, 28, 46, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 48px 48px 32px 32px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 30px 50px rgba(0,0,0,0.6), inset 0 0 30px rgba(173, 216, 230, 0.3);
+            padding: 30px 25px;
+            z-index: 2;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.4rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: #d3f2ff;
+            text-shadow: 0 4px 10px #005f8c, 0 0 15px #7fd4ff;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        h1 small {
+            font-size: 1rem;
+            background: #2e5c7c;
+            padding: 5px 15px;
+            border-radius: 40px;
+            color: #ffeec2;
+            text-shadow: none;
+            border: 1px solid #ffd966;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #1d3e55;
+            border-radius: 20px;
+            margin: 10px 0 10px;
+        }
+
+        #progress-fill {
+            height: 8px;
+            background: linear-gradient(90deg, #56ccf2, #b3e5fc, #ffd966);
+            width: 0%;
+            border-radius: 20px;
+            transition: width 0.2s ease;
+        }
+
+        .question-counter {
+            text-align: right;
+            color: #c0e4ff;
+            font-weight: 500;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .quiz-area {
+            background: rgba(0, 20, 40, 0.6);
+            border-radius: 50px;
+            padding: 30px 25px;
+            border: 1px solid #3f7faa;
+        }
+
+        .question-text {
+            font-size: 1.6rem;
+            font-weight: 500;
+            color: #fef9e7;
+            margin-bottom: 35px;
+            line-height: 1.4;
+            text-shadow: 2px 2px 2px #00000050;
+            min-height: 100px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 15px;
+            margin: 20px 0 15px;
+        }
+
+        .option-btn {
+            background: #173e57;
+            border: 2px solid #3179a0;
+            border-radius: 60px;
+            padding: 16px 20px;
+            font-size: 1.15rem;
+            font-weight: 500;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 5px 0 #0b273a;
+        }
+
+        .option-btn:hover {
+            background: #226f99;
+            border-color: #ffbc6c;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 #0b273a;
+        }
+
+        .option-btn.selected {
+            background: #3b8eb0;
+            border-color: #ffd966;
+            box-shadow: 0 0 15px #f0d43b;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 35px;
+        }
+
+        .nav-btn {
+            background: #eee6d8;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #003153;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #9e8b6f;
+            transition: 0.1s ease;
+            border: 1px solid #fde3a7;
+        }
+
+        .nav-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 1px 0 #9e8b6f;
+        }
+
+        .nav-btn:disabled {
+            opacity: 0.3;
+            transform: none;
+            box-shadow: 0 4px 0 #9e8b6f;
+            pointer-events: none;
+        }
+
+        #nextBtn {
+            display: none;
+        }
+
+        .result-area {
+            background: #103349f0;
+            border-radius: 50px;
+            padding: 30px;
+            margin-top: 25px;
+            color: #f0f9ff;
+            border: 1px solid #63b3d1;
+        }
+
+        .result-badge {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+            background: #06212e;
+            padding: 20px;
+            border-radius: 60px;
+        }
+
+        .result-role {
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #ffd966;
+            text-shadow: 3px 3px 0 #005f8c;
+        }
+
+        .chart-container {
+            max-width: 500px;
+            margin: 30px auto;
+            background: #05222daa;
+            padding: 20px;
+            border-radius: 40px;
+        }
+
+        .character-analysis {
+            background: #1b4c66;
+            padding: 30px;
+            border-radius: 40px;
+            font-size: 1.15rem;
+            line-height: 1.7;
+            border: 3px solid #f2c94c;
+            box-shadow: inset 0 0 20px #afe0ff;
+            white-space: pre-line;
+        }
+
+        .restart-btn {
+            background: #ffbc6c;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 30px auto 10px;
+            display: block;
+            cursor: pointer;
+            color: #001f33;
+        }
+
+        footer {
+            text-align: center;
+            color: #7ba9c9;
+            margin-top: 20px;
+        }
+
+        .emoji-big {
+            font-size: 2rem;
+            filter: drop-shadow(0 4px 2px black);
+        }
+    </style>
+</head>
+<body>
+<div class="main-wrapper">
+    <h1>
+        🐟 海底小纵队 · 生活场景测试
+        <small>60道日常情境·找到你的队员灵魂</small>
+    </h1>
+
+    <div class="progress-bar"><div id="progress-fill"></div></div>
+    <div class="question-counter" id="questionCounter">第 1 / 60 题</div>
+
+    <div id="quizContainer" class="quiz-area">
+        <div class="question-text" id="questionText">加载题目中...</div>
+        <div class="options-grid" id="optionsContainer"></div>
+        <div class="nav-buttons">
+            <button class="nav-btn" id="prevBtn" disabled>◀ 上一题</button>
+            <button class="nav-btn" id="nextBtn" style="display:none;">下一题 ▶</button>
+        </div>
+    </div>
+
+    <div id="resultContainer" class="result-area" style="display: none;">
+        <div class="result-badge">
+            <span class="emoji-big" id="resultEmoji">🐻‍❄️</span>
+            <span class="result-role" id="resultRole">巴克队长</span>
+        </div>
+        <div class="chart-container">
+            <canvas id="radarChart" width="400" height="300"></canvas>
+        </div>
+        <div class="character-analysis" id="analysisText"></div>
+        <button class="restart-btn" id="restartBtn">🔄 重新开始探险</button>
+    </div>
+
+    <footer>⚡ 60个生活选择 · 映射你的海底灵魂 ⚡</footer>
+</div>
+
+<script>
+    (function() {
+        // ----- 角色定义 (8位) -----
+        const ROLES = ["巴克队长", "呱唧", "皮医生", "谢灵通", "达西西", "突突兔", "章教授", "小萝卜"];
+
+        // ----- 手工编写60题，每题4个选项（纯文本，无角色标注），后台用role数组映射 -----
+        // 已全面复核每个选项与角色的匹配性，确保符合性格特质
+        const questions = [
+            { q: "周末你更倾向于？", 
+              opt: ["召集朋友组织一场郊游", "独自去陌生的街区探险", "在家看科普纪录片", "做一顿美食犒劳自己"],
+              role: ["巴克队长","呱唧","谢灵通","小萝卜"] },
+            { q: "看到有人受伤，你的第一反应是？", 
+              opt: ["立即上前查看并提供帮助", "拨打急救电话并维护秩序", "拍下现场照片记录", "寻找工具或药物辅助"],
+              role: ["皮医生","巴克队长","达西西","突突兔"] },
+            { q: "你最喜欢的休闲活动？", 
+              opt: ["玩冒险游戏或密室逃脱", "动手制作手工艺品", "逛博物馆或图书馆", "打理阳台花园"],
+              role: ["呱唧","突突兔","章教授","小萝卜"] },
+            { q: "朋友吵架了，你会？", 
+              opt: ["出面调解，让他们冷静沟通", "讲个笑话缓和气氛", "分别安慰，倾听感受", "分析吵架原因，给客观建议"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你更擅长哪种工作？", 
+              opt: ["领导和协调团队", "创新和冒险开拓", "精细操作和修理", "记录和数据分析"],
+              role: ["巴克队长","呱唧","突突兔","达西西"] },
+            { q: "家里需要修理电器，你会？", 
+              opt: ["自己动手修理", "找懂行的朋友帮忙", "先研究一下构造再动手", "将就着用，不影响生活"],
+              role: ["突突兔","巴克队长","谢灵通","小萝卜"] },
+            { q: "你计划一次旅行，第一步会做什么？", 
+              opt: ["制定详细行程和预算", "直接买票出发，随心所欲", "上网查攻略和注意事项", "准备好相机，打算拍很多照片"],
+              role: ["巴克队长","呱唧","谢灵通","达西西"] },
+            { q: "同事遇到工作难题，你会？", 
+              opt: ["主动分担部分工作", "组织会议一起讨论", "提供相关资料或参考案例", "帮他做一个工具自动化处理"],
+              role: ["皮医生","巴克队长","章教授","突突兔"] },
+            { q: "你如何管理你的财务？", 
+              opt: ["有详细的预算和记账", "随性消费，开心就好", "分析市场，理性投资", "节俭为主，注重储蓄"],
+              role: ["达西西","呱唧","谢灵通","巴克队长"] },
+            { q: "你更喜欢哪种类型的电影？", 
+              opt: ["冒险动作片", "纪录片或科普片", "温情治愈片", "科幻机械类"],
+              role: ["呱唧","谢灵通","皮医生","突突兔"] },
+            { q: "朋友向你倾诉烦恼，你会？", 
+              opt: ["给他建议并帮他规划", "带他出去散心转移注意力", "耐心倾听，给予情感支持", "理性分析问题根源"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你更喜欢以下哪种工作环境？", 
+              opt: ["井然有序的办公室", "充满变化的户外", "安静的图书馆", "设备齐全的工作坊"],
+              role: ["达西西","呱唧","章教授","突突兔"] },
+            { q: "当你遇到难题时，第一反应是？", 
+              opt: ["召集大家集思广益", "凭直觉尝试解决", "查阅资料寻找方法", "先做点别的放松心情"],
+              role: ["巴克队长","呱唧","谢灵通","小萝卜"] },
+            { q: "你如何看待规则？", 
+              opt: ["规则是保障安全的基础", "规则就是用来打破的", "理解规则背后的原理", "默默遵守规则"],
+              role: ["巴克队长","呱唧","谢灵通","小萝卜"] },
+            { q: "朋友生病了，你会？", 
+              opt: ["主动陪同去医院", "带搞笑视频逗他开心", "帮他记录病程和注意事项", "煮一锅营养汤送去"],
+              role: ["皮医生","呱唧","达西西","小萝卜"] },
+            { q: "你更愿意如何学习新技能？", 
+              opt: ["报班系统学习", "在实践中摸索", "阅读教材和论文", "看视频教程"],
+              role: ["巴克队长","呱唧","章教授","达西西"] },
+            { q: "厨房里锅烧着了，你会？", 
+              opt: ["冷静地盖上锅盖", "兴奋地喊‘着火了！’", "检查有没有人受伤", "分析起火原因"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你最想收到的礼物是？", 
+              opt: ["一本领导力书籍", "一张未知目的地的机票", "一套高级医疗急救包", "一套精密工具"],
+              role: ["巴克队长","呱唧","皮医生","突突兔"] },
+            { q: "你认为自己最大的优点是？", 
+              opt: ["责任感强", "乐观勇敢", "善解人意", "求知欲强"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "聚会时你通常扮演什么角色？", 
+              opt: ["组织者，安排活动", "气氛组，活跃大家", "倾听者，照顾每个人", "记录者，拍下美好瞬间"],
+              role: ["巴克队长","呱唧","皮医生","达西西"] },
+            { q: "遇到流浪猫狗，你会？", 
+              opt: ["带回家照顾", "和它们玩耍", "拍照发朋友圈", "喂它们食物"],
+              role: ["皮医生","呱唧","达西西","小萝卜"] },
+            { q: "你更喜欢哪种交通工具？", 
+              opt: ["安全可靠的大型潜艇", "高速刺激的皮划艇", "科学考察船", "多功能改装车"],
+              role: ["巴克队长","呱唧","谢灵通","突突兔"] },
+            { q: "你如何处理压力？", 
+              opt: ["制定计划分解压力", "通过运动释放", "找朋友倾诉", "研究压力来源，从根源解决"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你更喜欢阅读哪类书籍？", 
+              opt: ["人物传记", "冒险小说", "医学健康", "百科全书"],
+              role: ["巴克队长","呱唧","皮医生","章教授"] },
+            { q: "你理想中的周末是？", 
+              opt: ["和朋友们一起做有意义的事", "来一场说走就走的短途旅行", "安静地在家看书", "在花园里劳作"],
+              role: ["巴克队长","呱唧","章教授","小萝卜"] },
+            { q: "你更擅长哪种运动？", 
+              opt: ["团队运动如足球", "极限运动如攀岩", "游泳或瑜伽", "需要技巧的运动如射击"],
+              role: ["巴克队长","呱唧","皮医生","达西西"] },
+            { q: "你的桌面通常是？", 
+              opt: ["整洁有序", "乱七八糟但自己找得到", "分类明确，贴满标签", "摆着照片和纪念品"],
+              role: ["巴克队长","呱唧","谢灵通","达西西"] },
+            { q: "你更喜欢听哪种音乐？", 
+              opt: ["进行曲或交响乐", "摇滚或流行", "轻音乐或自然音效", "古典乐"],
+              role: ["巴克队长","呱唧","皮医生","章教授"] },
+            { q: "如果发现同事犯错，你会？", 
+              opt: ["私下指出并帮助改进", "当众开玩笑化解尴尬", "帮他弥补错误", "分析错误原因避免再犯"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你更喜欢哪种天气？", 
+              opt: ["晴朗无云", "暴风雨", "温暖和煦", "多雾，适合思考"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你如何处理旧物品？", 
+              opt: ["送给需要的人", "卖掉换钱", "修理后继续用", "收藏起来"],
+              role: ["巴克队长","呱唧","突突兔","章教授"] },
+            { q: "你更喜欢哪种游戏？", 
+              opt: ["策略类游戏", "动作冒险类", "模拟经营类", "解谜类"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你如何庆祝生日？", 
+              opt: ["办派对邀请朋友", "去没去过的地方玩", "和亲近的人吃顿饭", "自己做蛋糕"],
+              role: ["巴克队长","呱唧","皮医生","小萝卜"] },
+            { q: "你认为团队中最重要的是？", 
+              opt: ["纪律和秩序", "活力和创意", "关怀和信任", "知识和专业"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你更喜欢哪种动物？", 
+              opt: ["北极熊", "猫", "企鹅", "海獭"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你更倾向于哪种沟通方式？", 
+              opt: ["面对面开会", "语音消息", "文字沟通", "邮件或书信"],
+              role: ["巴克队长","呱唧","达西西","章教授"] },
+            { q: "你如何面对失败？", 
+              opt: ["总结教训，重整旗鼓", "一笑而过，继续尝试", "反思自己的不足", "分析失败数据"],
+              role: ["巴克队长","呱唧","皮医生","达西西"] },
+            { q: "你更喜欢哪种零食？", 
+              opt: ["营养均衡的鱼干", "辣条", "水果", "胡萝卜脆片"],
+              role: ["巴克队长","呱唧","皮医生","突突兔"] },
+            { q: "你如何看待科技产品？", 
+              opt: ["工具，需要合理使用", "新奇的玩具", "帮助他人的手段", "研究对象"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你更喜欢哪种颜色？", 
+              opt: ["深海蓝", "活力橙", "治愈粉", "大地色"],
+              role: ["巴克队长","呱唧","皮医生","小萝卜"] },
+            { q: "你如何安排假期？", 
+              opt: ["提前规划每一天", "随遇而安", "放松休息，不做安排", "研究当地文化历史"],
+              role: ["巴克队长","呱唧","皮医生","章教授"] },
+            { q: "你更看重朋友的什么品质？", 
+              opt: ["可靠", "有趣", "善良", "智慧"],
+              role: ["巴克队长","呱唧","皮医生","章教授"] },
+            { q: "你如何处理负面情绪？", 
+              opt: ["运动出汗", "找信任的人倾诉", "写日记分析原因", "做手工转移注意"],
+              role: ["呱唧","皮医生","达西西","突突兔"] },
+            { q: "你更喜欢哪种饮品？", 
+              opt: ["咖啡", "汽水", "热可可", "茶"],
+              role: ["巴克队长","呱唧","皮医生","章教授"] },
+            { q: "你更擅长哪种表达？", 
+              opt: ["公开演讲", "即兴发挥", "书写文字", "画画或图表"],
+              role: ["巴克队长","呱唧","达西西","谢灵通"] },
+            { q: "你理想中的家是什么样？", 
+              opt: ["功能分区明确", "充满探险元素", "温馨舒适", "有花园或阳台"],
+              role: ["巴克队长","呱唧","皮医生","小萝卜"] },
+            { q: "你如何看待挑战？", 
+              opt: ["需要充分准备", "越难越兴奋", "有机会成长", "值得研究"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你更关注哪类新闻？", 
+              opt: ["时政要闻", "娱乐八卦", "健康医疗", "科技探索"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你如何对待新来的同事？", 
+              opt: ["主动介绍团队情况", "热情拉他一起玩", "关心他是否适应", "给他分享工作资料"],
+              role: ["巴克队长","呱唧","皮医生","达西西"] },
+            { q: "你更喜欢哪种睡眠环境？", 
+              opt: ["完全黑暗安静", "有夜光灯", "白噪音", "枕边放本书"],
+              role: ["巴克队长","呱唧","皮医生","章教授"] },
+            { q: "你更倾向于哪种解决问题的方式？", 
+              opt: ["按流程一步步来", "凭灵感快速解决", "咨询他人意见", "查阅资料找到最优解"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你更喜欢哪种节日？", 
+              opt: ["国庆节", "愚人节", "感恩节", "科学节"],
+              role: ["巴克队长","呱唧","皮医生","谢灵通"] },
+            { q: "你如何记录生活？", 
+              opt: ["写日记", "拍摄视频", "画画", "写诗/文学创作"],
+              role: ["达西西","呱唧","小萝卜","章教授"] },
+            { q: "你更喜欢哪种植物？", 
+              opt: ["仙人掌", "爬山虎", "芦荟", "蔬菜"],
+              role: ["巴克队长","呱唧","皮医生","小萝卜"] },
+            { q: "你如何看待时间管理？", 
+              opt: ["严格按计划执行", "随心所欲，看心情", "把时间留给重要的人", "记录时间去向，分析优化"],
+              role: ["巴克队长","呱唧","皮医生","达西西"] },
+            { q: "你更喜欢哪种气候？", 
+              opt: ["寒带", "温带", "极地", "海洋性"],
+              role: ["巴克队长","呱唧","皮医生","章教授"] },
+            { q: "你如何安慰哭泣的朋友？", 
+              opt: ["拥抱他", "讲笑话", "陪他坐着，不说话", "分析为什么哭"],
+              role: ["皮医生","呱唧","小萝卜","谢灵通"] },
+            { q: "你更喜欢哪种餐具？", 
+              opt: ["实用的不锈钢", "一次性", "精致的陶瓷", "木制"],
+              role: ["巴克队长","呱唧","皮医生","小萝卜"] },
+            { q: "你更喜欢哪种音乐风格？", 
+              opt: ["古典", "摇滚", "轻音乐", "电子"],
+              role: ["章教授","呱唧","皮医生","突突兔"] },
+            { q: "你如何看待社交媒体？", 
+              opt: ["有用的信息渠道", "分享生活的地方", "保持联系的工具", "研究舆论的素材"],
+              role: ["巴克队长","呱唧","皮医生","达西西"] }
+        ]; // 共60题
+
+        // ----- 初始化得分映射 -----
+        let scores = {
+            "巴克队长": 0, "呱唧": 0, "皮医生": 0, "谢灵通": 0,
+            "达西西": 0, "突突兔": 0, "章教授": 0, "小萝卜": 0
+        };
+
+        // ----- 测试状态 -----
+        let currentIdx = 0;
+        let answers = new Array(60).fill(null); // 存储选项索引
+
+        // DOM元素
+        const quizDiv = document.getElementById('quizContainer');
+        const resultDiv = document.getElementById('resultContainer');
+        const questionText = document.getElementById('questionText');
+        const optionsDiv = document.getElementById('optionsContainer');
+        const prevBtn = document.getElementById('prevBtn');
+        const counterSpan = document.getElementById('questionCounter');
+        const progressFill = document.getElementById('progress-fill');
+        const restartBtn = document.getElementById('restartBtn');
+
+        // 渲染当前题目
+        function renderQuestion() {
+            const q = questions[currentIdx];
+            questionText.innerText = `${currentIdx+1}. ${q.q}`;
+            let htmlStr = '';
+            q.opt.forEach((opt, idx) => {
+                const selectedClass = answers[currentIdx] === idx ? 'selected' : '';
+                htmlStr += `<div class="option-btn ${selectedClass}" data-opt-index="${idx}">${opt}</div>`;
+            });
+            optionsDiv.innerHTML = htmlStr;
+
+            // 绑定选项点击事件
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const optIndex = parseInt(btn.dataset.optIndex);
+                    if (answers[currentIdx] === optIndex) return; // 已选相同
+                    answers[currentIdx] = optIndex;
+                    // 样式更新
+                    optionsDiv.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+
+                    // 自动跳转
+                    if (currentIdx < 59) {
+                        currentIdx++;
+                        renderQuestion();
+                    } else {
+                        // 最后一题，计算并显示结果
+                        computeResults();
+                    }
+                });
+            });
+
+            counterSpan.innerText = `第 ${currentIdx+1} / 60 题`;
+            progressFill.style.width = `${((currentIdx+1)/60)*100}%`;
+            prevBtn.disabled = (currentIdx === 0);
+        }
+
+        // 上一题
+        function prevQuestion() {
+            if (currentIdx > 0) {
+                currentIdx--;
+                renderQuestion();
+            }
+        }
+
+        // 计算结果
+        function computeResults() {
+            // 重置分数
+            for (let r in scores) scores[r] = 0;
+
+            // 累加答案分数
+            for (let i = 0; i < answers.length; i++) {
+                const ansIdx = answers[i];
+                if (ansIdx === null) continue; // 理论上不会，但防御
+                // 获取该题目选项对应的角色
+                const role = questions[i].role[ansIdx];
+                if (role) scores[role] += 1;
+            }
+
+            // 最高分角色
+            let maxRole = ROLES.reduce((a, b) => scores[a] > scores[b] ? a : b);
+            showResult(maxRole);
+        }
+
+        // 显示结果
+        function showResult(topRole) {
+            quizDiv.style.display = 'none';
+            resultDiv.style.display = 'block';
+
+            document.getElementById('resultRole').innerText = topRole;
+            const emojiMap = {
+                "巴克队长": "🐻‍❄️", "呱唧": "🐈", "皮医生": "🐧", "谢灵通": "🦦",
+                "达西西": "🐕", "突突兔": "🐇", "章教授": "🐙", "小萝卜": "🥕"
+            };
+            document.getElementById('resultEmoji').innerText = emojiMap[topRole] || "🐟";
+
+            // 柱状图
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            if (window.myChart) window.myChart.destroy();
+            window.myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ROLES,
+                    datasets: [{
+                        label: '匹配度',
+                        data: ROLES.map(r => scores[r]),
+                        backgroundColor: 'rgba(255, 206, 86, 0.8)',
+                        borderColor: '#ffbc6c',
+                        borderWidth: 2,
+                        borderRadius: 10
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#4f8daa' }, ticks: { color: '#cbe5ff' } },
+                        x: { ticks: { color: '#f0e6cc', font: { size: 10 } } }
+                    }
+                }
+            });
+
+            // 详细分析 (约400字)
+            let analysis = "";
+            if (topRole === "巴克队长") {
+                analysis = "🐻‍❄️ 巴克队长 —— 北极熊，天生的领导者。你沉稳可靠，富有责任感，总能在混乱中建立秩序。你像巴克一样，善于组织协调，照顾每一位队员，但也偶尔会因过于严肃而给人距离感。你相信纪律和准备是成功的关键，你的存在就是团队的定海神针。在生活中，你往往是朋友信赖的决策者，喜欢提前规划，但也别忘了偶尔放松，享受随性的快乐。";
+            } else if (topRole === "呱唧") {
+                analysis = "🐈 呱唧 —— 橘猫，冒险家。你热情奔放，充满好奇心，永远在寻找下一个刺激。你乐观幽默，能用笑声感染所有人，但也可能因为冲动而忽略风险。你像呱唧一样，喜欢探索未知，讨厌一成不变，是团队里的活力源泉。生活中你追求自由，讨厌被束缚，但也需要学会倾听和耐心，让冒险更有价值。";
+            } else if (topRole === "皮医生") {
+                analysis = "🐧 皮医生 —— 企鹅，温柔的医疗官。你善良体贴，总是先考虑他人的感受。你敏感细腻，能察觉别人忽略的情绪，但也容易过度承担他人的痛苦。像皮医生一样，你用自己的方式守护着身边的人，哪怕自己害怕也会挺身而出。生活中你是绝佳的倾听者和安慰者，但要记得照顾好自己的情绪。";
+            } else if (topRole === "谢灵通") {
+                analysis = "🦦 谢灵通 —— 海獭，科学家。你理性严谨，对世界充满好奇，喜欢钻研一切现象背后的原理。你有时会因专注而忽略周围，但你的知识储备常常能解决大问题。像谢灵通一样，你享受学习和分析，但偶尔也需要放下数据，用心感受世界。生活中你是朋友眼中的“百科全书”，但别忘了知识之外还有温情。";
+            } else if (topRole === "达西西") {
+                analysis = "🐕 达西西 —— 腊肠狗，技术专家。你冷静客观，善于记录和整理信息。你擅长使用工具和技术，总能为团队提供关键数据和影像。像达西西一样，你低调却不可或缺，喜欢用逻辑解决问题。生活中你可能显得有点“理工男/女”，但你的条理和细致让一切井井有条。不妨多些感性表达，让人更懂你的温暖。";
+            } else if (topRole === "突突兔") {
+                analysis = "🐇 突突兔 —— 兔子，机械师。你创意无限，动手能力极强，总能发明出奇妙的装置。你热情快节奏，喜欢挑战技术难题，但偶尔也会因为太专注于发明而忽略其他。像突突兔一样，你享受创造的过程，也乐于用技术帮助他人。生活中你是朋友中的“万能修理工”，但也需要耐心等待作品被理解。";
+            } else if (topRole === "章教授") {
+                analysis = "🐙 章教授 —— 小飞象章鱼，智慧长者。你博学沉稳，喜欢从历史和书籍中寻找答案。你话不多但字字珠玑，是团队的精神支柱。像章教授一样，你享受独处和思考，但也需要适当走出书房，亲身体验那些纸上记载的传奇。生活中你是值得信赖的顾问，但偶尔也要活动触手，参与冒险。";
+            } else if (topRole === "小萝卜") {
+                analysis = "🥕 小萝卜 —— 植物鱼，温暖的后勤。你默默付出，用行动表达关爱。你热爱生活，喜欢园艺和烹饪，总能用简单的快乐治愈大家。像小萝卜一样，你或许不是最显眼的，但你的存在让团队有了家的温度。生活中你温和细腻，善于照顾他人，但也要记得多为自己考虑，你的幸福同样重要。";
+            }
+            analysis += "\n\n你的性格维度在柱状图中清晰可见，每一个角色都代表你内在的一部分。无论结果是谁，你都是海底小纵队不可或缺的一员——勇敢、善良、好奇、忠诚……这些品质共同构成了独一无二的你。继续在生活的海洋里探险吧，队员！";
+            document.getElementById('analysisText').innerText = analysis;
+        }
+
+        // 重启
+        restartBtn.addEventListener('click', () => {
+            answers = new Array(60).fill(null);
+            currentIdx = 0;
+            for (let r in scores) scores[r] = 0;
+            quizDiv.style.display = 'block';
+            resultDiv.style.display = 'none';
+            renderQuestion();
+        });
+
+        // 上一题按钮
+        prevBtn.addEventListener('click', prevQuestion);
+
+        // 初始化
+        renderQuestion();
+    })();
+</script>
+</body>
+</html>
